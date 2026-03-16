@@ -1,15 +1,20 @@
 "use client";
 import { useRef, useState, useCallback, useEffect } from "react";
 import { useEmojiRecommendations } from "emoji-recsys";
+import { EmojiSpinner } from "./emoji-spinner";
 
-export function EmojiPicker({nEmojis}:{nEmojis: number}) {
+export function EmojiPicker({ nEmojis }: { nEmojis: number }) {
   const [query, setQuery] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const selectionRef = useRef({ start: 0, end: 0 });
   const [selectedText, setSelectedText] = useState("");
   const searchQuery = selectedText || query;
-  const { results, error } = useEmojiRecommendations(searchQuery, nEmojis);
+  const {
+    results,
+    loading,
+    // error,
+  } = useEmojiRecommendations(searchQuery, nEmojis);
 
   const resizeTextarea = useCallback((ta: HTMLTextAreaElement) => {
     ta.style.height = "auto";
@@ -33,13 +38,17 @@ export function EmojiPicker({nEmojis}:{nEmojis: number}) {
       );
     };
     document.addEventListener("selectionchange", onSelectionChange);
-    return () => document.removeEventListener("selectionchange", onSelectionChange);
+    return () =>
+      document.removeEventListener("selectionchange", onSelectionChange);
   }, []);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       setQuery(e.target.value);
-      selectionRef.current = { start: e.target.selectionStart, end: e.target.selectionEnd };
+      selectionRef.current = {
+        start: e.target.selectionStart,
+        end: e.target.selectionEnd,
+      };
       setSelectedText("");
       resizeTextarea(e.target);
     },
@@ -78,7 +87,6 @@ export function EmojiPicker({nEmojis}:{nEmojis: number}) {
         rows={1}
         value={query}
         onChange={handleChange}
-
         placeholder="Type to search emojis..."
         className="w-full resize-none overflow-hidden rounded-lg border border-zinc-200 bg-white px-4 py-3 text-base text-zinc-900 shadow-sm outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-500 dark:focus:ring-zinc-800"
       />
@@ -99,7 +107,13 @@ export function EmojiPicker({nEmojis}:{nEmojis: number}) {
           ))}
         </div>
       )}
-      {query && results.length === 0 && (
+      {loading && (
+        <div className="flex items-center gap-2 text-sm text-zinc-400">
+          <EmojiSpinner />
+          <span>loading emojis</span>
+        </div>
+      )}
+      {!loading && query && results.length === 0 && (
         <p className="text-sm text-zinc-400">No emojis found.</p>
       )}
     </div>
