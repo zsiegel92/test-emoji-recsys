@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { useEmojiRecommendations } from "emoji-recsys";
 
 export function EmojiPicker({nEmojis}:{nEmojis: number}) {
@@ -9,7 +9,7 @@ export function EmojiPicker({nEmojis}:{nEmojis: number}) {
   const selectionRef = useRef({ start: 0, end: 0 });
   const [selectedText, setSelectedText] = useState("");
   const searchQuery = selectedText || query;
-  const results = useEmojiRecommendations(searchQuery, nEmojis);
+  const { results, error } = useEmojiRecommendations(searchQuery, nEmojis);
 
   const resizeTextarea = useCallback((ta: HTMLTextAreaElement) => {
     ta.style.height = "auto";
@@ -17,6 +17,23 @@ export function EmojiPicker({nEmojis}:{nEmojis: number}) {
     const h = Math.min(ta.scrollHeight, maxH);
     ta.style.height = h + "px";
     ta.style.overflowY = ta.scrollHeight > maxH ? "auto" : "hidden";
+  }, []);
+
+  // Use document selectionchange for reliable mobile selection tracking
+  useEffect(() => {
+    const onSelectionChange = () => {
+      const ta = textareaRef.current;
+      if (!ta || document.activeElement !== ta) return;
+      const { selectionStart, selectionEnd, value } = ta;
+      selectionRef.current = { start: selectionStart, end: selectionEnd };
+      setSelectedText(
+        selectionStart !== selectionEnd
+          ? value.slice(selectionStart, selectionEnd)
+          : "",
+      );
+    };
+    document.addEventListener("selectionchange", onSelectionChange);
+    return () => document.removeEventListener("selectionchange", onSelectionChange);
   }, []);
 
   const handleChange = useCallback(
@@ -27,19 +44,6 @@ export function EmojiPicker({nEmojis}:{nEmojis: number}) {
       resizeTextarea(e.target);
     },
     [resizeTextarea],
-  );
-
-  const handleSelect = useCallback(
-    (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
-      const { selectionStart, selectionEnd, value } = e.currentTarget;
-      selectionRef.current = { start: selectionStart, end: selectionEnd };
-      setSelectedText(
-        selectionStart !== selectionEnd
-          ? value.slice(selectionStart, selectionEnd)
-          : "",
-      );
-    },
-    [],
   );
 
   const insertEmoji = useCallback(
@@ -74,7 +78,7 @@ export function EmojiPicker({nEmojis}:{nEmojis: number}) {
         rows={1}
         value={query}
         onChange={handleChange}
-        onSelect={handleSelect}
+
         placeholder="Type to search emojis..."
         className="w-full resize-none overflow-hidden rounded-lg border border-zinc-200 bg-white px-4 py-3 text-base text-zinc-900 shadow-sm outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-500 dark:focus:ring-zinc-800"
       />
