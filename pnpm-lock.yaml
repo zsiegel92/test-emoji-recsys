@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       emoji-recsys:
-        specifier: ^0.1.0
-        version: 0.1.0(react@19.2.3)
+        specifier: ^0.1.1
+        version: 0.1.1(react@19.2.3)
       next:
         specifier: 16.1.6
         version: 16.1.6(@babel/core@7.29.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -938,8 +938,8 @@ packages:
   electron-to-chromium@1.5.313:
     resolution: {integrity: sha512-QBMrTWEf00GXZmJyx2lbYD45jpI3TUFnNIzJ5BBc8piGUDwMPa1GV6HJWTZVvY/eiN3fSopl7NRbgGp9sZ9LTA==}
 
-  emoji-recsys@0.1.0:
-    resolution: {integrity: sha512-gF3mcEVs1eA09SKNoYw1cFzvuuvtWcqWRL2mLDUJKA1EN9LdOr3CyPQ3VS50WM9xt3jdVy1fboo+ZtCQOlNuOQ==}
+  emoji-recsys@0.1.1:
+    resolution: {integrity: sha512-EEs4mKnVks+nV0gHpHHJFGaqGgZVAgABoGzlWKjnGkQu/ksbKVgX3dQyBzeYb4459+2ZToYQTgu5N+O8EcRi8g==}
     peerDependencies:
       react: '>=18.0.0'
 
@@ -2918,7 +2918,7 @@ snapshots:
 
   electron-to-chromium@1.5.313: {}
 
-  emoji-recsys@0.1.0(react@19.2.3):
+  emoji-recsys@0.1.1(react@19.2.3):
     dependencies:
       '@huggingface/transformers': 3.8.1
       react: 19.2.3

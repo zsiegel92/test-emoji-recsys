@@ -2,14 +2,14 @@
 import { useRef, useState, useCallback } from "react";
 import { useEmojiRecommendations } from "emoji-recsys";
 
-export function EmojiPicker() {
+export function EmojiPicker({nEmojis}:{nEmojis: number}) {
   const [query, setQuery] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const selectionRef = useRef({ start: 0, end: 0 });
   const [selectedText, setSelectedText] = useState("");
   const searchQuery = selectedText || query;
-  const results = useEmojiRecommendations(searchQuery, 10);
+  const results = useEmojiRecommendations(searchQuery, nEmojis);
 
   const resizeTextarea = useCallback((ta: HTMLTextAreaElement) => {
     ta.style.height = "auto";
