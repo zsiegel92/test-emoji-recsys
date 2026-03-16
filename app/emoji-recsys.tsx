@@ -1,10 +1,90 @@
 "use client";
-import { useRef, useState, useCallback, useEffect } from "react";
+import {
+  Component,
+  useRef,
+  useState,
+  useCallback,
+  useEffect,
+  type ReactNode,
+  type ErrorInfo,
+} from "react";
 import { useEmojiRecommendations } from "emoji-recsys";
 import { EmojiSpinner } from "./emoji-spinner";
 
+const STORAGE_KEY = "emoji-recsys-query";
+
+function usePersistentQuery() {
+  const [query, setQuery] = useState(() => {
+    if (typeof window === "undefined") return "";
+    try {
+      return sessionStorage.getItem(STORAGE_KEY) ?? "";
+    } catch {
+      return "";
+    }
+  });
+
+  useEffect(() => {
+    try {
+      if (query) {
+        sessionStorage.setItem(STORAGE_KEY, query);
+      } else {
+        sessionStorage.removeItem(STORAGE_KEY);
+      }
+    } catch {
+      // sessionStorage unavailable
+    }
+  }, [query]);
+
+  return [query, setQuery] as const;
+}
+
+class EmojiPickerErrorBoundary extends Component<
+  { children: ReactNode },
+  { error: Error | null }
+> {
+  state: { error: Error | null } = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("EmojiPicker crashed:", error, info);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="w-full space-y-4">
+          <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+            Emoji RecSys
+          </h1>
+          <p className="text-sm text-red-500">
+            Something went wrong. Please refresh the page to try again.
+          </p>
+          <button
+            onClick={() => this.setState({ error: null })}
+            className="rounded-lg bg-zinc-200 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600"
+          >
+            Try again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export function EmojiPicker({ nEmojis }: { nEmojis: number }) {
-  const [query, setQuery] = useState("");
+  return (
+    <EmojiPickerErrorBoundary>
+      <EmojiPickerInner nEmojis={nEmojis} />
+    </EmojiPickerErrorBoundary>
+  );
+}
+
+function EmojiPickerInner({ nEmojis }: { nEmojis: number }) {
+  const [query, setQuery] = usePersistentQuery();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const selectionRef = useRef({ start: 0, end: 0 });
@@ -13,7 +93,7 @@ export function EmojiPicker({ nEmojis }: { nEmojis: number }) {
   const {
     results,
     loading,
-    // error,
+    error,
   } = useEmojiRecommendations(searchQuery, nEmojis);
 
   const resizeTextarea = useCallback((ta: HTMLTextAreaElement) => {
@@ -22,6 +102,13 @@ export function EmojiPicker({ nEmojis }: { nEmojis: number }) {
     const h = Math.min(ta.scrollHeight, maxH);
     ta.style.height = h + "px";
     ta.style.overflowY = ta.scrollHeight > maxH ? "auto" : "hidden";
+  }, []);
+
+  // Resize textarea on mount if query was restored from sessionStorage
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (ta && query) resizeTextarea(ta);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Use document selectionchange for reliable mobile selection tracking
@@ -113,7 +200,12 @@ export function EmojiPicker({ nEmojis }: { nEmojis: number }) {
           <span>loading emojis</span>
         </div>
       )}
-      {!loading && query && results.length === 0 && (
+      {error && (
+        <p className="text-sm text-red-500">
+          Failed to load emoji model. Try refreshing the page.
+        </p>
+      )}
+      {!loading && !error && query && results.length === 0 && (
         <p className="text-sm text-zinc-400">No emojis found.</p>
       )}
     </div>
